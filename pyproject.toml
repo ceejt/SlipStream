@@ -1,0 +1,24 @@
+[project]
+name = "f1-podium-predictor"
+version = "0.1.0"
+description = "Leak-free F1 podium prediction with walk-forward validation"
+requires-python = ">=3.11"
+dependencies = [
+    "fastf1>=3.4",
+    "pandas>=2.1",
+    "numpy>=1.26",
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "shap>=0.45",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

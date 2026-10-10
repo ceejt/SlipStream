@@ -1,0 +1,11 @@
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+DATA = ROOT / "data"
+RAW = DATA / "raw"
+CACHE = DATA / "cache"
+CIRCUITS_CSV = DATA / "circuits.csv"
+RESULTS_CSV = RAW / "results.csv"
+RACES_CSV = RAW / "races.csv"
+
+FORM_WINDOW = 5
