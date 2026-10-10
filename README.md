@@ -1,4 +1,6 @@
-# f1-podium-predictor
+# SlipStream
+
+Leak-free F1 podium prediction.
 
 Podium prediction with one rule: a feature for race N only uses what is known before race N.
 

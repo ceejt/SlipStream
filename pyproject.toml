@@ -1,5 +1,5 @@
 [project]
-name = "f1-podium-predictor"
+name = "slipstream"
 version = "0.1.0"
 description = "Leak-free F1 podium prediction with walk-forward validation"
 requires-python = ">=3.11"
