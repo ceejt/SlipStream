@@ -33,7 +33,7 @@ Honest evaluation. Features for race N use only information known before race N.
 
 - Per race, per driver: a podium probability (independent per driver, so they do not sum to 100%), the grid position, and the three features that moved the score most (SHAP reasons).
 - Probabilities are raw model output and not calibrated.
-- A report is one self-contained HTML file: no images, no icons, no JavaScript. The only external request is the web font link.
+- A report is one self-contained HTML file: no images, no icons, and no JavaScript of its own. The only external requests are the web font link and the Vercel Web Analytics script, which counts visits without cookies.
 - No weather features and no safety car features yet. Both were removed when the data source changed.
 - Terminology: **podium** means finishing in the top 3. **Grid** means qualifying order. **Backtest** means a race already in the data.
 - The `reports/` folder is the whole site: each race has a page, and `index.html` lists them. It is meant to be served as static files (Vercel, with `reports` as the root directory).

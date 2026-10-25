@@ -122,3 +122,9 @@ def test_race_pages_have_a_back_button_and_the_index_does_not():
     html = render(_payload(drivers=[_driver("VER", "Red Bull", 0.8)]))
     assert 'class="back" href="index.html"' in html and "Back to all races" in html
     assert "Back to all races" not in render_index([])
+
+
+def test_vercel_analytics_script_is_on_report_and_index():
+    tag = '<script defer src="/_vercel/insights/script.js"></script>'
+    assert tag in render(_payload(drivers=[_driver("VER", "Red Bull", 0.8)]))
+    assert tag in render_index([])

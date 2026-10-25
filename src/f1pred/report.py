@@ -128,6 +128,11 @@ color:var(--text);text-decoration:none;transition:background-color .15s cubic-be
 
 FINISHED = re.compile(r"Finished|Lap")
 
+# Vercel Web Analytics for plain HTML. The script is served by Vercel itself, so it
+# does nothing (and fails quietly) when a page is opened from disk.
+ANALYTICS = ('<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>'
+             '<script defer src="/_vercel/insights/script.js"></script>')
+
 BRAND = ('<p class="brand"><a href="https://github.com/ceejt/SlipStream" target="_blank" rel="noopener noreferrer" '
          'aria-label="SlipStream, source code on GitHub (opens in a new tab)">SlipStream</a></p>')
 
@@ -370,7 +375,7 @@ def render(p: dict, evaluation=None, names=None) -> str:
         "Grid is the qualifying order, so penalties are not included.") if s)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SlipStream {p['year']} {escape(p['event'])}</title>{FONT_LINK}<style>{CSS}</style></head><body><main>
+<title>SlipStream {p['year']} {escape(p['event'])}</title>{FONT_LINK}{ANALYTICS}<style>{CSS}</style></head><body><main>
 {_top(True)}
 <h1>{escape(p['event'])}</h1>
 <p class="meta">{tag}<span>Round {p['round']}, {p['year']}</span><span>Trained on {p['trained_on_races']} earlier races</span><span>Made {made}</span>{result_added}</p>
@@ -417,7 +422,7 @@ def render_index(items, evaluation=None, names=None):
     claim = " ".join(s for s in ("Raw model output, not calibrated.", _baseline_line(evaluation)) if s)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SlipStream</title>{FONT_LINK}<style>{CSS}</style></head><body><main>
+<title>SlipStream</title>{FONT_LINK}{ANALYTICS}<style>{CSS}</style></head><body><main>
 {_top()}
 <h1>Formula 1 podium predictions</h1>
 <p class="claim">Made after qualifying and saved before the race, then compared with the result. {escape(claim)}</p>

@@ -4,7 +4,7 @@ Design system for the SlipStream prediction reports (`reports/*.html`, rendered 
 
 The look follows the Formula 1 race page (`formula1.com/en/racing/2026/united-states`). Values marked **observed** were read from that page's CSS on 2026-10-25. Values marked **decision** are SlipStream's own choices where the F1 page gives no rule.
 
-Reports stay one self-contained HTML file: no images, no icons, no JavaScript. The only external request allowed is the web font link.
+Reports stay one self-contained HTML file: no images, no icons, and no JavaScript of our own. The only external requests allowed are the web font link and the Vercel Web Analytics script (`/_vercel/insights/script.js`), which is served by the host and counts visits without cookies.
 
 ## 1. Branding identity
 
