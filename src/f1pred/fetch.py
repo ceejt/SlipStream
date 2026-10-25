@@ -39,6 +39,7 @@ def season_rows(year, results, quali):
             times = [_seconds(qr[k]) for k in ("Q3", "Q2", "Q1") if qr.get(k)]
             rows.append({
                 "Abbreviation": code, "TeamName": r["Constructor"]["name"],
+                "GivenName": r["Driver"].get("givenName", ""), "FamilyName": r["Driver"].get("familyName", ""),
                 "GridPosition": r["grid"], "Position": r["position"],
                 "Status": r["status"], "Points": r["points"],
                 "quali_pos": qr.get("position"),

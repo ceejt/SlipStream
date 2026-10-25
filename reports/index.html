@@ -1,0 +1,128 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SlipStream</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet"><style>
+:root{--red:#E10600;--red-deep:#CA0500;--red-tint:#F6B4B2;
+--bg:#15151E;--surface:#26262B;--surface-2:#303037;--rule:#47464C;
+--text:#FFFFFF;--muted:#AAAAAA;--tag:var(--red-tint);--chrome-lo:#8A8A92;--chrome-hi:#FFFFFF;--chrome-edge:rgba(255,255,255,.18);
+--display:"Formula1","Titillium Web",system-ui,sans-serif;--body:"Titillium Web",system-ui,sans-serif}
+@media (prefers-color-scheme:light){:root{--bg:#F7F4F1;--surface:#FFFFFF;--surface-2:#E0DEDC;--rule:#CDCDCD;
+--text:#15151E;--muted:#606066;--tag:var(--red-deep);--chrome-lo:#15151E;--chrome-hi:#5A5A62;--chrome-edge:rgba(0,0,0,.12)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:600 14px/16px var(--body)}
+::selection{background:var(--red);color:#FFFFFF}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+main{max-width:973px;margin:0 auto;padding:24px 16px 48px}
+@media(min-width:735px){main{padding:32px 24px 64px}}
+@media(min-width:1069px){main{padding:32px 32px 64px}}
+.brand{font:900 16px/22px var(--display);text-transform:uppercase;letter-spacing:.5px;margin:0 0 32px;
+padding-bottom:12px;border-bottom:1px solid var(--rule)}
+h1{font:900 32px/38px var(--display);text-transform:uppercase;text-wrap:balance;margin:0 0 12px}
+@media(min-width:735px){h1{font-size:40px;line-height:44px}}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;color:var(--muted);margin:0 0 16px}
+.tag{border:1px solid var(--tag);color:var(--tag);border-radius:4px;padding:2px 8px;
+font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px}
+.tag.back{border-color:var(--muted);color:var(--muted)}
+.claim{font:400 16px/24px var(--body);max-width:68ch;margin:0 0 32px}
+.summary{font:600 16px/24px var(--body);margin:0 0 16px}
+.label{font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:0 0 12px}
+.podium{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:48px}
+@media(min-width:735px){.podium{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card-bg,var(--surface-2));color:var(--on,var(--text));border-radius:8px;padding:16px;
+display:grid;grid-template-columns:1fr auto;gap:12px 16px}
+@media(min-width:735px){.card{display:flex;flex-direction:column;min-height:256px}}
+.pick{font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px}
+.first{font:400 20px/24px var(--display);margin:0}
+.last{font:700 28px/32px var(--display);margin:0;overflow-wrap:anywhere}
+@media(min-width:735px){.last{font-size:32px;line-height:36px}}
+.team{font:600 14px/16px var(--body);margin:8px 0 0}
+.score{align-self:end;text-align:right}
+@media(min-width:735px){.score{align-self:stretch;margin-top:auto;padding-top:16px;text-align:left}}
+.pct{font:700 36px/40px var(--body);margin:0;font-variant-numeric:tabular-nums}
+.sub{font:600 14px/16px var(--body);margin:0}
+.outcome{grid-column:1/-1;margin:0;display:flex;align-items:center;gap:8px;font:600 16px/20px var(--body)}
+.why{grid-column:1/-1;margin:0;padding:0;list-style:none;font:600 14px/20px var(--body)}
+.why b{display:inline-block;width:12px;font-weight:400}
+.mark{display:inline-block;padding:0 6px;border:1px solid currentColor;border-radius:4px;
+font:500 12px/18px var(--display);letter-spacing:.5px;text-transform:uppercase}
+.mark.miss{border-style:dashed}
+td .mark.miss{border-color:var(--muted);color:var(--muted)}
+td .mark{border-color:var(--text)}
+table{width:100%;border-collapse:collapse}
+.scroll{overflow-x:auto;scrollbar-color:var(--rule) transparent}
+th,td{padding:12px 6px;text-align:left;border-bottom:1px solid var(--rule)}
+th{font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding-bottom:8px}
+td{height:44px;transition:background-color .15s cubic-bezier(.4,0,.2,1)}
+tbody tr:hover td{background:var(--surface-2)}
+.num{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.fin{white-space:nowrap}
+.cell{display:flex;align-items:center;gap:12px;font:500 16px/22px var(--display);text-transform:uppercase}
+.sv{flex:none;width:4px;height:24px;background:var(--team);box-shadow:inset 0 0 0 1px var(--rule)}
+.unmapped .sv{background:transparent;box-shadow:inset 0 0 0 1px var(--muted)}
+.team-col{display:none;color:var(--muted)}
+@media(min-width:735px){.team-col{display:table-cell}th,td{padding:12px 8px}}
+.pb{display:flex;align-items:center;gap:8px}
+@media(min-width:735px){.pb{gap:12px}}
+.bar{flex:1;height:8px;background:var(--surface-2);border-radius:4px;min-width:32px}
+@media(min-width:735px){.bar{min-width:120px}}
+.bar i{display:block;height:100%;min-width:2px;background:var(--red);border-radius:4px;
+animation:grow .3s cubic-bezier(.4,0,.2,1) both;animation-delay:calc(var(--i)*30ms)}
+@keyframes grow{from{width:0}}
+.pv{flex:none;width:48px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.made{margin:48px 0 0;padding-top:16px;border-top:1px solid var(--rule);color:var(--muted);font:600 14px/20px var(--body)}
+.made a{color:var(--text);font-weight:700;text-decoration:underline;text-decoration-color:var(--muted);text-underline-offset:3px}
+@supports (background-clip:text) or (-webkit-background-clip:text){
+.made a{background:repeating-linear-gradient(105deg,var(--chrome-lo) 0,var(--chrome-hi) 9px,var(--chrome-lo) 18px) 0 0/300% 100%;
+-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+font:900 17px/20px var(--body);transition:background-position .8s cubic-bezier(.4,0,.2,1);
+filter:drop-shadow(0 1px 0 var(--chrome-edge))}
+.made a:hover,.made a:focus-visible{background-position:-9px 0}}
+.races{list-style:none;margin:0 0 16px;padding:0}
+.races a{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:16px 8px;border-bottom:1px solid var(--rule);
+color:var(--text);text-decoration:none;transition:background-color .15s cubic-bezier(.4,0,.2,1)}
+.races a:hover{background:var(--surface-2)}
+.races .ev{font:700 20px/24px var(--display);text-transform:uppercase}
+.races .meta2{color:var(--muted);font:600 14px/20px var(--body);margin:0}
+.races .when{color:var(--muted);font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px;text-align:right}
+.method{margin-top:64px;max-width:68ch}
+.method h3{font:700 20px/24px var(--body);margin:32px 0 8px}
+.method p,.method li{font:400 16px/24px var(--body);margin:0 0 12px}
+.method ul{margin:0 0 12px;padding-left:20px}
+.method li{margin-bottom:8px}
+.method .scroll{margin:16px 0;max-width:none}
+.method caption{caption-side:top;text-align:left;color:var(--muted);font:600 14px/20px var(--body);padding-bottom:8px}
+.note{color:var(--muted);font:400 14px/20px var(--body);max-width:68ch;margin:32px 0 0}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body><main>
+<p class="brand">SlipStream</p>
+<h1>Formula 1 podium predictions</h1>
+<p class="claim">Made after qualifying and saved before the race, then compared with the result. Raw model output, not calibrated. Has not yet beaten a grid-order baseline (82 races through 2026 round 17).</p>
+<h2 class="label">Races</h2>
+<ul class="races"><li><a href="2026_R18.html"><span><span class="ev">United States Grand Prix</span><p class="meta2">Top pick Max Verstappen, 84.4% podium probability</p></span><span class="when">Round 18, 2026<br>Waiting for the race</span></a></li></ul>
+<section class="method" aria-labelledby="how">
+<h2 class="label" id="how">How it works</h2>
+<h3>What the model looks at</h3>
+<p>For every driver in a race, the model gets a short list of facts that were known before the start:</p>
+<ul>
+<li>Where the driver starts, where they qualified, and how far they were from the pole time.</li>
+<li>How they finished in their last five races, and how often they retire.</li>
+<li>How many points their team has scored lately, and how often the team's cars retire.</li>
+<li>How often cars retire at this circuit, how many places drivers usually gain or lose there, whether it is a street circuit, and its altitude.</li>
+</ul>
+<p>Nothing from the race itself is ever used. That is the one rule the project is built around: a prediction for a race only uses what was known before that race.</p>
+<h3>How it turns facts into a percentage</h3>
+<p>The model is XGBoost. It builds many small decision trees. Each tree asks simple questions, like "does this driver start in the top three?" or "has this team been scoring well?", and nudges the answer a little. Together, the trees settle on one number.</p>
+<p>To learn, the model looks at every earlier race. For each driver it sees the facts above and whether they finished on the podium (the top three). Over time it learns which combinations of facts usually lead to a podium. For a new race, it gives each driver a number from 0% to 100%: how likely that driver is to finish in the top three, judging by how similar drivers did before. It is not a simulation of the race.</p>
+<p>Each driver gets their own number, and a podium has three places, so across the whole field the numbers add up to around 300%, not 100%. A driver at 80% is not "80% to win". It means the model thinks a podium is very likely.</p>
+<h3>Why each pick has reasons</h3>
+<p>Under each of the three picks you see the three facts that moved the number most. They come from a method called SHAP. A plus sign means the fact raised the driver's chance. A minus sign means it lowered it. The strongest comes first.</p>
+<h3>How it is checked</h3>
+<p>A model can look clever by accident if it has already seen the answers. So every race is tested like this: pretend it is the day before that race, teach the model only with earlier races, make the predictions, then compare them with what really happened. This is called walk-forward testing, and it is repeated for every race after the first five.</p>
+<p>The model is also compared with two simple guesses. One says the first three on the grid will finish on the podium. The other is a basic formula that only looks at starting position. If the model cannot beat these, it has not added anything useful.</p>
+<div class="scroll"><table><caption>82 races, through 2026 round 17</caption><thead><tr><th scope="col">Method</th><th scope="col" class="num">Top-3 overlap</th><th scope="col" class="num">Exact podium</th><th scope="col" class="num">Brier score</th><th scope="col" class="num">Log loss</th></tr></thead><tbody><tr><td>First three on the grid</td><td class="num">67.1%</td><td class="num">24.4%</td><td class="num">n/a</td><td class="num">n/a</td></tr><tr><td>Formula on grid position only</td><td class="num">67.1%</td><td class="num">24.4%</td><td class="num">0.068</td><td class="num">0.239</td></tr><tr><td>SlipStream model</td><td class="num">68.3%</td><td class="num">23.2%</td><td class="num">0.071</td><td class="num">0.234</td></tr></tbody></table></div>
+<p>Top-3 overlap is the share of the real podium drivers that were in the model's top three picks. Exact podium counts the races where all three picks were right. Brier score and log loss judge the percentages themselves. For both of those, lower is better.</p>
+<p>So far the model has not clearly beaten the two simple guesses, so treat its picks with care. That is why the top of each page says so.</p><h3>What it does not know</h3>
+<p>It does not know about grid penalties, because it uses the qualifying order. It also knows nothing about weather, tyre choices, safety cars or car upgrades, and it has only a few seasons of results, so some circuits have little history. The percentages are raw model output. They have not been checked for calibration, so a "70%" may not come true seven times in ten.</p>
+<p>Treat the numbers as a ranking of who looks strongest, not as a promise. Results and qualifying come from the Jolpica F1 API.</p>
+</section>
+<footer class="made">Made by <a href="https://ceejt-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer">ceejt</a></footer>
+</main></body></html>

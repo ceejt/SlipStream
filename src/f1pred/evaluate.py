@@ -4,12 +4,16 @@ Compares the model with two baselines: grid order and a logistic regression
 on grid position alone. Metrics: top-3 hit rate (overlap with true podium),
 exact podium rate, Brier score and log loss on podium probabilities.
 """
+import json
+from datetime import datetime, timezone
+
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss, log_loss
 from xgboost import XGBClassifier
 
+from .config import EVALUATION
 from .features import FEATURES, build
 
 MIN_TRAIN_RACES = 5
@@ -62,6 +66,19 @@ def report(res):
     return pd.DataFrame(rows).round(3)
 
 
+def save(res, table):
+    """Write the latest table so reports can state it as of the day they were made."""
+    last = int(res["race_id"].max())
+    models = {r["model"]: {k: None if pd.isna(v) else float(v) for k, v in r.items() if k != "model"}
+              for r in table.to_dict("records")}
+    out = {"created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+           "races": int(res["race_id"].nunique()),
+           "through": {"year": last // 100, "round": last % 100}, "models": models}
+    EVALUATION.write_text(json.dumps(out, indent=2))
+
+
 if __name__ == "__main__":
     res = walk_forward(build())
-    print(report(res).to_string(index=False))
+    table = report(res)
+    print(table.to_string(index=False))
+    save(res, table)

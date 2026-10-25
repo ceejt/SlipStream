@@ -2,7 +2,7 @@ import pandas as pd
 
 from f1pred.features import build
 from f1pred.predict import predict_frame
-from f1pred.report import render
+from f1pred.report import _baseline_line, render, render_index
 from tests.test_no_leakage import _fake
 
 
@@ -20,3 +20,78 @@ def test_predict_uses_only_earlier_races_and_renders():
                     "reasons": r["reasons"]} for _, r in out.iterrows()]}
     html = render(payload)
     assert "&lt;Test&gt;" in html and "<Test>" not in html
+
+
+def _payload(mode="upcoming", drivers=None):
+    return {"year": 2026, "round": 18, "event": "X", "mode": mode, "created_utc": "2026-10-25T17:52:10+00:00",
+            "trained_on_races": 87, "location": "Austin", "drivers": drivers or []}
+
+
+def _driver(code, team, p, actual=None, status=None, grid=1):
+    return {"driver": code, "team": team, "grid": grid, "p_podium": p, "actual_position": actual,
+            "status": status, "reasons": [{"feature": "driver_form_pos", "value": 3.4, "shap": 0.2}]}
+
+
+def test_unknown_team_and_missing_grid_do_not_break_render():
+    d = _driver("ZZZ", "Brand New Team", 0.5, grid=None)
+    d["reasons"] = [{"feature": "driver_form_pos", "value": None, "shap": 0.2}]
+    html = render(_payload(drivers=[d]))
+    assert "unmapped" in html and "grid unknown" in html and "driver form pos" in html
+    assert "2026-10-25 17:52 UTC" in html
+
+
+def test_known_teams_get_a_color_and_reasons_read_as_plain_words():
+    html = render(_payload(drivers=[_driver("VER", "Red Bull", 0.8), _driver("GAS", "Alpine F1 Team", 0.1)]))
+    assert "#3671C6" in html and "#00A1E8" in html
+    assert "Recent average finish of 3.4" in html and "Pick 1" in html
+
+
+def test_backtest_summary_marks_hits_misses_dnf_and_near_misses():
+    ds = [_driver("AAA", "Red Bull", .9, 1, "Finished"), _driver("BBB", "Ferrari", .8, 9, "+1 Lap"),
+          _driver("CCC", "Mercedes", .7, 2, "Retired"), _driver("DDD", "McLaren", .1, 2, "Finished"),
+          _driver("EEE", "Williams", .0, 3, "Finished")]
+    html = render(_payload("backtest", ds))
+    assert "1 of 3 picks finished on the podium." in html
+    assert "On the podium but not picked: DDD (2nd), EEE (3rd)." in html
+    assert "Did not finish" in html and "DNF" in html
+
+
+def test_baseline_line_follows_the_saved_numbers():
+    ev = {"races": 82, "through": {"year": 2026, "round": 17}, "models": {
+        "grid order": {"top3_overlap": .67, "brier": None, "logloss": None},
+        "grid logistic": {"top3_overlap": .67, "brier": .068, "logloss": .239},
+        "xgboost": {"top3_overlap": .68, "brier": .071, "logloss": .234}}}
+    assert "Has not yet beaten a grid-order baseline (82 races through 2026 round 17)." == _baseline_line(ev)
+    ev["models"]["xgboost"].update(brier=.060, logloss=.200)
+    assert _baseline_line(ev).startswith("Has beaten a grid-order baseline")
+    assert _baseline_line(None) == ""
+
+
+def test_footer_credits_the_author_with_a_safe_external_link():
+    html = render(_payload(drivers=[_driver("VER", "Red Bull", 0.8)]))
+    assert 'href="https://ceejt-portfolio.vercel.app/"' in html
+    assert 'rel="noopener noreferrer"' in html and "Made by" in html
+
+
+def test_index_lists_races_newest_first_and_links_to_each_report():
+    a = _payload(drivers=[_driver("VER", "Red Bull", 0.8)])
+    b = dict(_payload("backtest", [_driver("AAA", "Ferrari", .9, 1, "Finished")]), round=17, event="Singapore Grand Prix")
+    html = render_index([a, b])
+    assert html.index("2026_R18.html") < html.index("2026_R17.html")
+    assert "1 of 3 picks on the podium" in html and "Waiting for the race" in html
+    assert "No predictions yet." in render_index([])
+
+
+def test_method_section_is_on_the_report_and_its_table_uses_the_saved_numbers():
+    ev = {"races": 82, "through": {"year": 2026, "round": 17}, "models": {
+        "grid order": {"top3_overlap": .671, "exact_podium": .244, "brier": None, "logloss": None},
+        "grid logistic": {"top3_overlap": .671, "exact_podium": .244, "brier": .068, "logloss": .239},
+        "xgboost": {"top3_overlap": .683, "exact_podium": .232, "brier": .071, "logloss": .234}}}
+    p = dict(_payload(drivers=[_driver("VER", "Red Bull", 0.8)]), evaluation=ev)
+    html = render(p)
+    assert "How it works" in html and "walk-forward" in html and "XGBoost" in html
+    assert "68.3%" in html and "0.071" in html and "has not clearly beaten" in html
+    assert "<caption>82 races, through 2026 round 17</caption>" in html
+    plain = render(_payload(drivers=[_driver("VER", "Red Bull", 0.8)]))
+    assert "How it works" in plain and "<caption>" not in plain
+    assert "How it works" in render_index([p], ev)

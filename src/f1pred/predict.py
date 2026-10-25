@@ -18,7 +18,7 @@ import pandas as pd
 import shap
 
 from . import jolpica
-from .config import PREDICTIONS, RESULTS_CSV
+from .config import EVALUATION, PREDICTIONS, RESULTS_CSV
 from .evaluate import make_model
 from .fetch import _code, _seconds
 from .features import FEATURES, build
@@ -98,11 +98,13 @@ def run(year: int, rnd: int, grid=None) -> dict:
         "year": year, "round": rnd, "event": str(first["event"]), "location": str(first["location"]),
         "mode": "backtest" if done else "upcoming",
         "trained_on_races": int(df[(df["race_id"] < race_id) & df["position"].notna()]["race_id"].nunique()),
+        "evaluation": json.loads(EVALUATION.read_text()) if EVALUATION.exists() else None,
         "drivers": [{
             "driver": r["Abbreviation"], "team": r["TeamName"],
             "grid": None if pd.isna(r["grid"]) else int(r["grid"]),
             "p_podium": round(float(r["p_podium"]), 4),
             "actual_position": None if (not done or pd.isna(r["position"])) else int(r["position"]),
+            "status": str(r["Status"]) if done else None,
             "reasons": r["reasons"]} for _, r in out.iterrows()],
     }
     PREDICTIONS.mkdir(parents=True, exist_ok=True)

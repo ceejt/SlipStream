@@ -1,0 +1,31 @@
+{
+  "created_utc": "2026-10-25T18:35:49+00:00",
+  "races": 82,
+  "through": {
+    "year": 2026,
+    "round": 17
+  },
+  "models": {
+    "grid order": {
+      "races": 82.0,
+      "top3_overlap": 0.671,
+      "exact_podium": 0.244,
+      "brier": null,
+      "logloss": null
+    },
+    "grid logistic": {
+      "races": 82.0,
+      "top3_overlap": 0.671,
+      "exact_podium": 0.244,
+      "brier": 0.068,
+      "logloss": 0.239
+    },
+    "xgboost": {
+      "races": 82.0,
+      "top3_overlap": 0.683,
+      "exact_podium": 0.232,
+      "brier": 0.071,
+      "logloss": 0.234
+    }
+  }
+}

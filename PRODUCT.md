@@ -1,0 +1,60 @@
+# Product
+
+## Platform
+
+web
+
+## Users
+
+- **The project owner, checking the model.** Opens a report before a race to read the picks, and after the race to see how they scored (HIT or MISS). The job is to judge whether the model is any good.
+- **F1 fans.** Open a race's report to see the predicted podium and the reasons behind each pick. They do not need to know the code.
+
+Not written for recruiters or interviewers. Reports should explain the model to a curious fan, not present it as a portfolio piece.
+
+## Product Purpose
+
+SlipStream predicts the Formula 1 podium (top 3 finishers) for one race at a time and publishes each prediction as a static HTML report. The main job of a report is to be a public pre-race prediction log: a dated record of what the model said before the race, with the actual result added beside it afterward.
+
+Success is a record that can be checked. A reader can see when a prediction was made, how many races the model trained on, how each driver's probability was reached, and, after the race, what happened.
+
+## Positioning
+
+Honest evaluation. Features for race N use only information known before race N. Validation is walk-forward (train on earlier races, test on the next). Results are compared with grid-order baselines, and a tie with the baseline is reported as a tie.
+
+## Operating Context
+
+- Data comes from the Jolpica F1 API (the Ergast successor, no login). F1's own live timing service now requires authentication, so it is not used.
+- A prediction is made after qualifying and before the race. Qualifying order is the grid, so grid penalties are not reflected.
+- The workflow is command line: `fetch`, `evaluate`, `predict <year> <round>`, which writes `data/predictions/<year>_R<round>.json` and `reports/<year>_R<round>.html`.
+- A report has two modes. **Upcoming**: the race has not run. **Backtest**: the race is in the data and the report shows the actual result and HIT or MISS for the three predicted drivers.
+- For now, predictions are committed and pushed by hand, so the commit time on a prediction is the proof it came before the race.
+
+## Capabilities and Constraints
+
+- Per race, per driver: a podium probability (independent per driver, so they do not sum to 100%), the grid position, and the three features that moved the score most (SHAP reasons).
+- Probabilities are raw model output and not calibrated.
+- A report is one self-contained HTML file: no images, no icons, no JavaScript. The only external request is the web font link.
+- No weather features and no safety car features yet. Both were removed when the data source changed.
+- Terminology: **podium** means finishing in the top 3. **Grid** means qualifying order. **Backtest** means a race already in the data.
+- The `reports/` folder is the whole site: each race has a page, and `index.html` lists them. It is meant to be served as static files (Vercel, with `reports` as the root directory).
+- Planned, not built: a scheduled job that makes each prediction after qualifying and adds the result after the race. Until then, new races are added by hand.
+
+## Brand Commitments
+
+- Name: SlipStream, shown as a plain text wordmark.
+- Voice: plain and factual. No promotional claims about accuracy that the evaluation does not support.
+
+## Evidence on Hand
+
+- `data/predictions/2026_R18.json` and `reports/2026_R18.html`: the pre-race prediction for the 2026 United States GP (VER, ANT, HAD as the top three by probability).
+- Walk-forward evaluation on 82 races (2023 to 2026 data, saved in `data/evaluation.json`): XGBoost has a top-3 overlap of 0.683 against 0.671 for both baselines, a log loss of 0.234 against 0.239, but a worse Brier score (0.071 against 0.068) and a lower exact-podium rate (0.232 against 0.244). Mixed, so the model has not clearly beaten the baseline.
+- Tests that check features do not use the current race's outcome.
+- Absent, so future work must not invent them: a track record of scored predictions across many races, calibration results, user counts, and any published URL.
+
+## Product Principles
+
+1. **Pre-race information only.** A feature for race N uses nothing from race N or later.
+2. **Report the result as it is.** A tie with the baseline is stated as a tie. No accuracy claim goes in without an evaluation behind it.
+3. **A prediction is fixed once made.** The actual result is added beside it, never in place of it.
+4. **Probabilities are not certainty.** Show them as model output, say they are uncalibrated, and never present a pick as a call.
+5. **Show enough to check the claim.** Every report states when it was made, how many races it trained on, and why each top pick scored as it did.
