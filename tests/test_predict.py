@@ -109,3 +109,16 @@ def test_outcome_fills_results_without_changing_the_saved_prediction():
     html = render(scored)
     assert "1 of 3 picks finished on the podium." in html and "Result added 2026-10-26 02:10 UTC" in html
     assert "Did not finish" in html and _apply_outcome(p, None) is p
+
+
+def test_wordmark_links_to_the_repo_on_report_and_index():
+    link = 'href="https://github.com/ceejt/SlipStream"'
+    html = render(_payload(drivers=[_driver("VER", "Red Bull", 0.8)]))
+    assert link in html and 'rel="noopener noreferrer"' in html
+    assert link in render_index([])
+
+
+def test_race_pages_have_a_back_button_and_the_index_does_not():
+    html = render(_payload(drivers=[_driver("VER", "Red Bull", 0.8)]))
+    assert 'class="back" href="index.html"' in html and "Back to all races" in html
+    assert "Back to all races" not in render_index([])

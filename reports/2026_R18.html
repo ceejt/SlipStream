@@ -14,8 +14,14 @@ body{margin:0;background:var(--bg);color:var(--text);font:600 14px/16px var(--bo
 main{max-width:973px;margin:0 auto;padding:24px 16px 48px}
 @media(min-width:735px){main{padding:32px 24px 64px}}
 @media(min-width:1069px){main{padding:32px 32px 64px}}
-.brand{font:900 16px/22px var(--display);text-transform:uppercase;letter-spacing:.5px;margin:0 0 32px;
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 0 32px;
 padding-bottom:12px;border-bottom:1px solid var(--rule)}
+.brand{font:900 16px/22px var(--display);text-transform:uppercase;letter-spacing:.5px;margin:0}
+.back{color:var(--text);text-decoration:none;border:1px solid var(--rule);border-radius:4px;padding:4px 12px;
+font:600 14px/20px var(--body);transition:background-color .15s cubic-bezier(.4,0,.2,1)}
+.back:hover{background:var(--surface-2)}
+.brand a{color:inherit;text-decoration:none}
+.brand a:hover{text-decoration:underline;text-underline-offset:4px}
 h1{font:900 32px/38px var(--display);text-transform:uppercase;text-wrap:balance;margin:0 0 12px}
 @media(min-width:735px){h1{font-size:40px;line-height:44px}}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;color:var(--muted);margin:0 0 16px}
@@ -93,7 +99,7 @@ color:var(--text);text-decoration:none;transition:background-color .15s cubic-be
 .note{color:var(--muted);font:400 14px/20px var(--body);max-width:68ch;margin:32px 0 0}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style></head><body><main>
-<p class="brand">SlipStream</p>
+<header class="top"><p class="brand"><a href="https://github.com/ceejt/SlipStream" target="_blank" rel="noopener noreferrer" aria-label="SlipStream, source code on GitHub (opens in a new tab)">SlipStream</a></p><a class="back" href="index.html">Back to all races</a></header>
 <h1>United States Grand Prix</h1>
 <p class="meta"><span class="tag">upcoming</span><span>Round 18, 2026</span><span>Trained on 87 earlier races</span><span>Made 2026-10-25 17:46 UTC</span></p>
 <p class="claim">Raw model output, not calibrated. Has not yet beaten a grid-order baseline (82 races through 2026 round 17). Grid is the qualifying order, so penalties are not included.</p>

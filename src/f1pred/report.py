@@ -40,8 +40,14 @@ body{margin:0;background:var(--bg);color:var(--text);font:600 14px/16px var(--bo
 main{max-width:973px;margin:0 auto;padding:24px 16px 48px}
 @media(min-width:735px){main{padding:32px 24px 64px}}
 @media(min-width:1069px){main{padding:32px 32px 64px}}
-.brand{font:900 16px/22px var(--display);text-transform:uppercase;letter-spacing:.5px;margin:0 0 32px;
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 0 32px;
 padding-bottom:12px;border-bottom:1px solid var(--rule)}
+.brand{font:900 16px/22px var(--display);text-transform:uppercase;letter-spacing:.5px;margin:0}
+.back{color:var(--text);text-decoration:none;border:1px solid var(--rule);border-radius:4px;padding:4px 12px;
+font:600 14px/20px var(--body);transition:background-color .15s cubic-bezier(.4,0,.2,1)}
+.back:hover{background:var(--surface-2)}
+.brand a{color:inherit;text-decoration:none}
+.brand a:hover{text-decoration:underline;text-underline-offset:4px}
 h1{font:900 32px/38px var(--display);text-transform:uppercase;text-wrap:balance;margin:0 0 12px}
 @media(min-width:735px){h1{font-size:40px;line-height:44px}}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;color:var(--muted);margin:0 0 16px}
@@ -121,6 +127,15 @@ color:var(--text);text-decoration:none;transition:background-color .15s cubic-be
 """
 
 FINISHED = re.compile(r"Finished|Lap")
+
+BRAND = ('<p class="brand"><a href="https://github.com/ceejt/SlipStream" target="_blank" rel="noopener noreferrer" '
+         'aria-label="SlipStream, source code on GitHub (opens in a new tab)">SlipStream</a></p>')
+
+def _top(back=False):
+    """Top bar: wordmark on the left, and on race pages a button back to the index."""
+    link = '<a class="back" href="index.html">Back to all races</a>' if back else ""
+    return f'<header class="top">{BRAND}{link}</header>'
+
 
 CREDIT = ('<footer class="made">Made by <a href="https://ceejt-portfolio.vercel.app/" '
           'target="_blank" rel="noopener noreferrer">ceejt</a></footer>')
@@ -356,7 +371,7 @@ def render(p: dict, evaluation=None, names=None) -> str:
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SlipStream {p['year']} {escape(p['event'])}</title>{FONT_LINK}<style>{CSS}</style></head><body><main>
-<p class="brand">SlipStream</p>
+{_top(True)}
 <h1>{escape(p['event'])}</h1>
 <p class="meta">{tag}<span>Round {p['round']}, {p['year']}</span><span>Trained on {p['trained_on_races']} earlier races</span><span>Made {made}</span>{result_added}</p>
 <p class="claim">{escape(claim)}</p>
@@ -403,7 +418,7 @@ def render_index(items, evaluation=None, names=None):
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SlipStream</title>{FONT_LINK}<style>{CSS}</style></head><body><main>
-<p class="brand">SlipStream</p>
+{_top()}
 <h1>Formula 1 podium predictions</h1>
 <p class="claim">Made after qualifying and saved before the race, then compared with the result. {escape(claim)}</p>
 <h2 class="label">Races</h2>

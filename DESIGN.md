@@ -213,12 +213,13 @@ F1's CSS is built on a Tailwind-style 4px grid. **Decision:** use the same scale
 
 ### 6.1 Page header
 ```
-SLIPSTREAM                                   <- wordmark bar, display black, 1px rule below
+SLIPSTREAM                                   <- wordmark bar, display black, 1px rule below; links to the GitHub repo
 UNITED STATES GRAND PRIX                     <- h1, display, uppercase
 [UPCOMING]  Round 18, 2026  ·  Trained on 87 earlier races  ·  Made 2026-10-25 17:46 UTC
 Raw model output, not calibrated. Has not yet beaten a grid-order baseline (82 races
 through 2026 round 17). Grid is the qualifying order, so penalties are not included.
 ```
+- Race pages have a "Back to all races" button on the right of the wordmark bar. It is a plain text link in a 1px outlined, 4px-radius box that links to `index.html`. The index page has no such button. There is no arrow glyph or icon.
 - No eyebrow above the title. The round and year sit in the meta line.
 - The tag is a 4px-radius box with a 1px border. `UPCOMING` uses the red tint (dark) or deep red (light). `SCORED` (a pre-race prediction with its result added) and `BACKTEST` use `--muted`. A scored page also shows when the result was added in the meta line.
 - The claim sentence is body text (16px, regular), not a footnote. Its baseline sentence is generated from `data/evaluation.json` (written by `evaluate`) and stored in each prediction at the time it is made. It says "Has beaten" only when the model beats the grid logistic on Brier score and log loss and the grid order on top-3 overlap. Otherwise it says "Has not yet beaten". If no evaluation exists, the sentence is left out.
