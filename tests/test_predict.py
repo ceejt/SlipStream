@@ -2,7 +2,7 @@ import pandas as pd
 
 from f1pred.features import build
 from f1pred.predict import predict_frame
-from f1pred.report import _baseline_line, render, render_index
+from f1pred.report import _apply_outcome, _baseline_line, render, render_index
 from tests.test_no_leakage import _fake
 
 
@@ -95,3 +95,17 @@ def test_method_section_is_on_the_report_and_its_table_uses_the_saved_numbers():
     plain = render(_payload(drivers=[_driver("VER", "Red Bull", 0.8)]))
     assert "How it works" in plain and "<caption>" not in plain
     assert "How it works" in render_index([p], ev)
+
+
+def test_outcome_fills_results_without_changing_the_saved_prediction():
+    ds = [_driver("AAA", "Red Bull", .9), _driver("BBB", "Ferrari", .8), _driver("CCC", "Mercedes", .7)]
+    p = _payload(drivers=ds)
+    o = {"created_utc": "2026-10-26T02:10:33+00:00", "drivers": {
+        "AAA": {"position": 1, "status": "Finished"}, "BBB": {"position": 12, "status": "Finished"},
+        "CCC": {"position": 14, "status": "Retired"}}}
+    scored = _apply_outcome(p, o)
+    assert scored["mode"] == "scored" and scored["drivers"][0]["actual_position"] == 1
+    assert p["mode"] == "upcoming" and p["drivers"][0]["actual_position"] is None  # original untouched
+    html = render(scored)
+    assert "1 of 3 picks finished on the podium." in html and "Result added 2026-10-26 02:10 UTC" in html
+    assert "Did not finish" in html and _apply_outcome(p, None) is p

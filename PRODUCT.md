@@ -25,8 +25,8 @@ Honest evaluation. Features for race N use only information known before race N.
 
 - Data comes from the Jolpica F1 API (the Ergast successor, no login). F1's own live timing service now requires authentication, so it is not used.
 - A prediction is made after qualifying and before the race. Qualifying order is the grid, so grid penalties are not reflected.
-- The workflow is command line: `fetch`, `evaluate`, `predict <year> <round>`, which writes `data/predictions/<year>_R<round>.json` and `reports/<year>_R<round>.html`.
-- A report has two modes. **Upcoming**: the race has not run. **Backtest**: the race is in the data and the report shows the actual result and HIT or MISS for the three predicted drivers.
+- The workflow is command line: `fetch`, `evaluate`, `predict <year> <round>`, which writes `data/predictions/<year>_R<round>.json` and `reports/<year>_R<round>.html`. After the race, `fetch` then `outcome` adds the result in `data/outcomes/` and rebuilds the page. The saved prediction is not touched.
+- A report has three modes. **Upcoming**: the race has not run. **Scored**: a pre-race prediction with the real result added afterward, showing HIT or MISS for the three picks. **Backtest**: a prediction made for a race already in the data, so it was not made before the race.
 - For now, predictions are committed and pushed by hand, so the commit time on a prediction is the proof it came before the race.
 
 ## Capabilities and Constraints
@@ -37,7 +37,7 @@ Honest evaluation. Features for race N use only information known before race N.
 - No weather features and no safety car features yet. Both were removed when the data source changed.
 - Terminology: **podium** means finishing in the top 3. **Grid** means qualifying order. **Backtest** means a race already in the data.
 - The `reports/` folder is the whole site: each race has a page, and `index.html` lists them. It is meant to be served as static files (Vercel, with `reports` as the root directory).
-- Planned, not built: a scheduled job that makes each prediction after qualifying and adds the result after the race. Until then, new races are added by hand.
+- Planned, not built: a scheduled job that makes each prediction after qualifying and runs the `outcome` step after the race. Until then, both are run by hand.
 
 ## Brand Commitments
 

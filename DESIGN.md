@@ -220,7 +220,7 @@ Raw model output, not calibrated. Has not yet beaten a grid-order baseline (82 r
 through 2026 round 17). Grid is the qualifying order, so penalties are not included.
 ```
 - No eyebrow above the title. The round and year sit in the meta line.
-- The tag is a 4px-radius box with a 1px border. `UPCOMING` uses the red tint (dark) or deep red (light). `BACKTEST` uses `--muted`.
+- The tag is a 4px-radius box with a 1px border. `UPCOMING` uses the red tint (dark) or deep red (light). `SCORED` (a pre-race prediction with its result added) and `BACKTEST` use `--muted`. A scored page also shows when the result was added in the meta line.
 - The claim sentence is body text (16px, regular), not a footnote. Its baseline sentence is generated from `data/evaluation.json` (written by `evaluate`) and stored in each prediction at the time it is made. It says "Has beaten" only when the model beats the grid logistic on Brier score and log loss and the grid order on top-3 overlap. Otherwise it says "Has not yet beaten". If no evaluation exists, the sentence is left out.
 - Backtest only: a summary line follows ("2 of 3 picks finished on the podium. On the podium but not picked: HAM (2nd).").
 

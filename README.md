@@ -12,12 +12,14 @@ Podium prediction with one rule: a feature for race N only uses what is known be
     .venv/bin/python -m f1pred.evaluate                    # walk-forward vs baselines
     .venv/bin/python -m f1pred.predict 2026 18             # one race, saves JSON + HTML
     .venv/bin/python -m f1pred.predict 2026 18 --grid VER,LEC,...   # if qualifying is not on Jolpica yet
+    .venv/bin/python -m f1pred.outcome                      # after the race: adds the result beside the saved prediction
     .venv/bin/pytest                                       # leakage tests
 
 ## Layout
 - `src/f1pred/jolpica.py`: small Jolpica API client with paging, rate limiting and a disk cache
 - `src/f1pred/fetch.py`: Jolpica to `data/raw/` (results, qualifying). No weather or safety car data yet
-- `src/f1pred/predict.py`, `report.py`: one-race prediction as JSON and a static HTML page
+- `src/f1pred/predict.py`, `report.py`: one-race prediction as JSON and a static HTML page, plus the index
+- `src/f1pred/outcome.py`: adds the real result to a saved prediction (`data/outcomes/`) and rebuilds its page; the prediction file is never changed
 - `src/f1pred/features.py`: leak-free rolling driver, team and circuit features
 - `src/f1pred/evaluate.py`: walk-forward split, baselines, metrics
 - `data/circuits.csv`: static circuit attributes (starter rows, verify values, add the rest). The `location` must match Jolpica's locality, for example `Spa`

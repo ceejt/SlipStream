@@ -6,7 +6,7 @@ from html import escape
 
 import pandas as pd
 
-from .config import EVALUATION, PREDICTIONS, REPORTS, RESULTS_CSV
+from .config import EVALUATION, OUTCOMES, PREDICTIONS, REPORTS, RESULTS_CSV
 
 FONT_LINK = (
     '<link rel="preconnect" href="https://fonts.googleapis.com">'
@@ -271,6 +271,23 @@ def _outcome(d):
     return None if pos is None else _ordinal(pos)
 
 
+def _load_outcome(p):
+    """The saved result for a prediction, or None if the race has not been scored yet."""
+    f = OUTCOMES / f'{p["year"]}_R{p["round"]:02d}.json'
+    return json.loads(f.read_text()) if f.exists() else None
+
+
+def _apply_outcome(p, o):
+    """A copy of the prediction with the real result filled in. The saved prediction is never changed."""
+    if not o:
+        return p
+    drivers = []
+    for d in p["drivers"]:
+        got = o["drivers"].get(d["driver"], {})
+        drivers.append(dict(d, actual_position=got.get("position"), status=got.get("status")))
+    return dict(p, mode="scored", outcome_utc=o["created_utc"], drivers=drivers)
+
+
 def _is_hit(d):
     return _outcome(d) not in (None, "DNF") and d["actual_position"] <= 3
 
@@ -278,7 +295,7 @@ def _is_hit(d):
 def render(p: dict, evaluation=None, names=None) -> str:
     drivers = p["drivers"]
     picks = drivers[:3]
-    backtest = p["mode"] == "backtest"
+    backtest = p["mode"] in ("backtest", "scored")
     evaluation = p.get("evaluation") or evaluation
 
     cards = ""
@@ -330,6 +347,8 @@ def render(p: dict, evaluation=None, names=None) -> str:
     extra_th = '<th scope="col" class="num">Finished</th>' if backtest else ""
 
     made = escape(p["created_utc"][:16].replace("T", " ")) + " UTC"
+    result_added = (f'<span>Result added {escape(p["outcome_utc"][:16].replace("T", " "))} UTC</span>'
+                    if p.get("outcome_utc") else "")
     tag = f'<span class="tag{" back" if backtest else ""}">{escape(p["mode"])}</span>'
     claim = " ".join(s for s in (
         "Raw model output, not calibrated.", _baseline_line(evaluation),
@@ -339,7 +358,7 @@ def render(p: dict, evaluation=None, names=None) -> str:
 <title>SlipStream {p['year']} {escape(p['event'])}</title>{FONT_LINK}<style>{CSS}</style></head><body><main>
 <p class="brand">SlipStream</p>
 <h1>{escape(p['event'])}</h1>
-<p class="meta">{tag}<span>Round {p['round']}, {p['year']}</span><span>Trained on {p['trained_on_races']} earlier races</span><span>Made {made}</span></p>
+<p class="meta">{tag}<span>Round {p['round']}, {p['year']}</span><span>Trained on {p['trained_on_races']} earlier races</span><span>Made {made}</span>{result_added}</p>
 <p class="claim">{escape(claim)}</p>
 {summary}<h2 class="label">Highest podium probability</h2>
 <section class="podium">{cards}</section>
@@ -372,7 +391,7 @@ def render_index(items, evaluation=None, names=None):
         top = p["drivers"][0]
         first, last = _names(top["driver"], names)
         who = f"{first} {last}".strip()
-        backtest = p["mode"] == "backtest"
+        backtest = p["mode"] in ("backtest", "scored")
         hits = sum(_is_hit(d) for d in p["drivers"][:3])
         detail = f'Top pick {who}, {top["p_podium"] * 100:.1f}% podium probability'
         status = f"{hits} of 3 picks on the podium" if backtest else "Waiting for the race"
@@ -396,6 +415,7 @@ def render_index(items, evaluation=None, names=None):
 
 def write_index(fallback=None, names=None):
     items = [json.loads(f.read_text()) for f in PREDICTIONS.glob("*.json")]
+    items = [_apply_outcome(p, _load_outcome(p)) for p in items]
     items.sort(key=lambda p: (p["year"], p["round"]), reverse=True)
     ev = (items[0].get("evaluation") if items else None) or fallback
     path = REPORTS / "index.html"
@@ -405,6 +425,7 @@ def write_index(fallback=None, names=None):
 
 def write_report(payload: dict):
     REPORTS.mkdir(parents=True, exist_ok=True)
+    payload = _apply_outcome(payload, _load_outcome(payload))
     fallback = json.loads(EVALUATION.read_text()) if EVALUATION.exists() else None
     names = _name_lookup()
     path = REPORTS / f"{payload['year']}_R{payload['round']:02d}.html"

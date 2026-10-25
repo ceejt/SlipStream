@@ -11,4 +11,5 @@ RACES_CSV = RAW / "races.csv"
 FORM_WINDOW = 5
 PREDICTIONS = DATA / "predictions"
 EVALUATION = DATA / "evaluation.json"
+OUTCOMES = DATA / "outcomes"
 REPORTS = ROOT / "reports"
