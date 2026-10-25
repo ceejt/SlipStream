@@ -8,15 +8,19 @@ Podium prediction with one rule: a feature for race N only uses what is known be
     python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 
 ## Run
-    .venv/bin/python -m f1pred.fetch 2022 2023 2024   # slow the first time, cached after
-    .venv/bin/python -m f1pred.evaluate               # walk-forward vs baselines
-    .venv/bin/pytest                                  # leakage tests
+    .venv/bin/python -m f1pred.fetch 2023 2024 2025 2026   # Jolpica API, about a minute
+    .venv/bin/python -m f1pred.evaluate                    # walk-forward vs baselines
+    .venv/bin/python -m f1pred.predict 2026 18             # one race, saves JSON + HTML
+    .venv/bin/python -m f1pred.predict 2026 18 --grid VER,LEC,...   # if qualifying is not on Jolpica yet
+    .venv/bin/pytest                                       # leakage tests
 
 ## Layout
-- `src/f1pred/fetch.py`: FastF1 to `data/raw/` (results, quali, weather, safety car)
+- `src/f1pred/jolpica.py`: small Jolpica API client with paging, rate limiting and a disk cache
+- `src/f1pred/fetch.py`: Jolpica to `data/raw/` (results, qualifying). No weather or safety car data yet
+- `src/f1pred/predict.py`, `report.py`: one-race prediction as JSON and a static HTML page
 - `src/f1pred/features.py`: leak-free rolling driver, team and circuit features
 - `src/f1pred/evaluate.py`: walk-forward split, baselines, metrics
-- `data/circuits.csv`: static circuit attributes (starter rows, verify values, add the rest)
+- `data/circuits.csv`: static circuit attributes (starter rows, verify values, add the rest). The `location` must match Jolpica's locality, for example `Spa`
 
 ## Roadmap
 1. Fetch 2018 to 2025 and read the first honest baseline numbers

@@ -12,8 +12,7 @@ def _fake(n_races=8, n_drivers=6):
                              GridPosition=d + 1, Position=d + 1, Status="Finished" if d else "Retired",
                              Points=max(0, 10 - d), quali_pos=d + 1, quali_time_s=80 + d * 0.1,
                              event=f"E{r}", location="Monza"))
-        races.append(dict(year=2024, round=r, air_temp=25, track_temp=35, humidity=50,
-                          rain_frac=0.0, safety_car=r % 2))
+        races.append(dict(year=2024, round=r))
     circuits = pd.DataFrame([dict(location="Monza", lat=0, lon=0, altitude_m=162, is_street=0)])
     return pd.DataFrame(rows), pd.DataFrame(races), circuits
 
@@ -32,7 +31,7 @@ def test_features_ignore_current_race_outcome():
     last = res2["round"] == res2["round"].max()
     res2.loc[last, ["Position", "Status", "Points"]] = [20, "Retired", 0]
     changed = build(res2, races, circuits)
-    cols = ["driver_form_pos", "driver_dnf_rate", "team_form_pts", "circuit_dnf_rate", "circuit_sc_rate"]
+    cols = ["driver_form_pos", "driver_dnf_rate", "team_form_pts", "circuit_dnf_rate", "circuit_pos_gain"]
     a = base[base["round"] == base["round"].max()][cols].reset_index(drop=True)
     b = changed[changed["round"] == changed["round"].max()][cols].reset_index(drop=True)
     pd.testing.assert_frame_equal(a, b)

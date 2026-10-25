@@ -1,73 +1,68 @@
-"""Fetch race results, qualifying and race-day weather/safety-car info via FastF1.
+"""Fetch race results and qualifying from the Jolpica F1 API.
 
-Usage: python -m f1pred.fetch 2022 2023 2024
+Usage: python -m f1pred.fetch 2024 2025 2026
 Writes data/raw/results.csv (one row per driver per race) and data/raw/races.csv
-(one row per race). Safe to re-run: FastF1 caches downloads in data/cache.
+(one row per race). Files are rewritten after each season, so a failure keeps
+the seasons already fetched. Weather and safety car data are not fetched.
 """
 import sys
+from datetime import date
 
-import fastf1
 import pandas as pd
 
-from .config import CACHE, RACES_CSV, RAW, RESULTS_CSV
+from . import jolpica
+from .config import RACES_CSV, RAW, RESULTS_CSV
 
 
-def _best_quali_time(row):
-    times = [row.get(c) for c in ("Q3", "Q2", "Q1")]
-    times = [t for t in times if pd.notna(t)]
-    return times[0].total_seconds() if times else float("nan")
+def _seconds(t):
+    """'1:15.096' -> 75.096. Empty or missing -> NaN."""
+    if not t:
+        return float("nan")
+    m, _, s = t.rpartition(":")
+    return int(m or 0) * 60 + float(s)
 
 
-def fetch_race(year: int, rnd: int):
-    race = fastf1.get_session(year, rnd, "R")
-    race.load(laps=True, telemetry=False, weather=True, messages=False)
-    quali = fastf1.get_session(year, rnd, "Q")
-    quali.load(laps=False, telemetry=False, weather=False, messages=False)
+def _code(driver):
+    return driver.get("code") or driver["familyName"][:3].upper()
 
-    res = race.results[["Abbreviation", "TeamName", "GridPosition", "Position", "Status", "Points"]].copy()
-    q = quali.results[["Abbreviation", "Position", "Q1", "Q2", "Q3"]].copy()
-    q["quali_time_s"] = q.apply(_best_quali_time, axis=1)
-    q = q.rename(columns={"Position": "quali_pos"})[["Abbreviation", "quali_pos", "quali_time_s"]]
-    df = res.merge(q, on="Abbreviation", how="left")
-    df["year"], df["round"] = year, rnd
-    df["event"] = race.event["EventName"]
-    df["location"] = race.event["Location"]
 
-    w = race.weather_data
-    ts = race.track_status
-    sc = int(ts["Status"].astype(str).isin(["4"]).any()) if ts is not None and len(ts) else 0
-    vsc = int(ts["Status"].astype(str).isin(["6"]).any()) if ts is not None and len(ts) else 0
-    race_row = {
-        "year": year, "round": rnd, "event": race.event["EventName"],
-        "location": race.event["Location"], "date": race.event["EventDate"],
-        "air_temp": w["AirTemp"].mean(), "track_temp": w["TrackTemp"].mean(),
-        "humidity": w["Humidity"].mean(), "rain_frac": float(w["Rainfall"].mean()),
-        "safety_car": sc, "vsc": vsc,
-    }
-    return df, race_row
+def season_rows(year, results, quali):
+    """Turn Jolpica race dicts (keyed by round) into result rows and race rows."""
+    rows, races = [], []
+    for rnd, race in sorted(results.items()):
+        q = {_code(x["Driver"]): x for x in quali.get(rnd, {}).get("QualifyingResults", [])}
+        event = race["raceName"]
+        location = race["Circuit"]["Location"]["locality"]
+        for r in race["Results"]:
+            code = _code(r["Driver"])
+            qr = q.get(code, {})
+            times = [_seconds(qr[k]) for k in ("Q3", "Q2", "Q1") if qr.get(k)]
+            rows.append({
+                "Abbreviation": code, "TeamName": r["Constructor"]["name"],
+                "GridPosition": r["grid"], "Position": r["position"],
+                "Status": r["status"], "Points": r["points"],
+                "quali_pos": qr.get("position"),
+                "quali_time_s": times[0] if times else float("nan"),
+                "year": year, "round": rnd, "event": event, "location": location,
+            })
+        races.append({"year": year, "round": rnd, "event": event,
+                      "location": location, "date": race["date"]})
+    return rows, races
 
 
 def main(years):
     RAW.mkdir(parents=True, exist_ok=True)
-    CACHE.mkdir(parents=True, exist_ok=True)
-    fastf1.Cache.enable_cache(str(CACHE))
-    all_rows, race_rows = [], []
+    all_rows, all_races = [], []
     for year in years:
-        sched = fastf1.get_event_schedule(year, include_testing=False)
-        for rnd in sched["RoundNumber"]:
-            if sched.loc[sched["RoundNumber"] == rnd, "EventDate"].iloc[0] > pd.Timestamp.now():
-                continue
-            try:
-                df, rr = fetch_race(year, int(rnd))
-            except Exception as e:
-                print(f"skip {year} R{rnd}: {e}")
-                continue
-            all_rows.append(df)
-            race_rows.append(rr)
-            print(f"ok   {year} R{rnd} {rr['event']}")
-    pd.concat(all_rows, ignore_index=True).to_csv(RESULTS_CSV, index=False)
-    pd.DataFrame(race_rows).to_csv(RACES_CSV, index=False)
+        rows, races = season_rows(year, jolpica.season(year, "results"),
+                                  jolpica.season(year, "qualifying"))
+        all_rows += rows
+        all_races += races
+        pd.DataFrame(all_rows).to_csv(RESULTS_CSV, index=False)
+        pd.DataFrame(all_races).to_csv(RACES_CSV, index=False)
+        print(f"ok   {year}: {len(races)} races, {len(rows)} driver rows")
 
 
 if __name__ == "__main__":
-    main([int(y) for y in sys.argv[1:]] or [2023, 2024])
+    this_year = date.today().year
+    main([int(y) for y in sys.argv[1:]] or list(range(this_year - 3, this_year + 1)))

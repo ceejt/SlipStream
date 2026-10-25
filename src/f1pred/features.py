@@ -2,19 +2,19 @@
 
 Rule: a feature for race N may only use information known before race N starts.
 Rolling stats are computed on earlier races only (shift before aggregating).
-Race-day weather is the one exception: for training it is the observed value,
-which stands in for a forecast. Swap in forecast data before real use.
+There are no weather features yet. Add them from a forecast, not from observed
+race-day weather, so training and prediction see the same kind of input.
 """
 import numpy as np
 import pandas as pd
 
-from .config import CIRCUITS_CSV, FORM_WINDOW, RACES_CSV, RESULTS_CSV
+from .config import CIRCUITS_CSV, FORM_WINDOW, RESULTS_CSV
 
 FEATURES = [
     "grid", "quali_pos", "quali_gap_s",
     "driver_form_pos", "driver_dnf_rate", "team_form_pts", "team_dnf_rate",
-    "circuit_dnf_rate", "circuit_pos_gain", "circuit_sc_rate",
-    "altitude_m", "is_street", "air_temp", "track_temp", "humidity", "rain_frac",
+    "circuit_dnf_rate", "circuit_pos_gain",
+    "altitude_m", "is_street",
 ]
 
 
@@ -27,13 +27,11 @@ def _prior_rolling(df, group, col, window=None):
 
 
 def build(results=None, races=None, circuits=None) -> pd.DataFrame:
+    # races is unused until forecast features exist; kept so callers stay stable
     results = pd.read_csv(RESULTS_CSV) if results is None else results.copy()
-    races = pd.read_csv(RACES_CSV) if races is None else races.copy()
     circuits = pd.read_csv(CIRCUITS_CSV) if circuits is None else circuits.copy()
 
-    df = results.merge(races[["year", "round", "air_temp", "track_temp", "humidity",
-                              "rain_frac", "safety_car"]], on=["year", "round"], how="left")
-    df = df.merge(circuits[["location", "altitude_m", "is_street"]], on="location", how="left")
+    df = results.merge(circuits[["location", "altitude_m", "is_street"]], on="location", how="left")
     df = df.sort_values(["year", "round"]).reset_index(drop=True)
     df["race_id"] = df["year"] * 100 + df["round"]
 
@@ -60,14 +58,11 @@ def build(results=None, races=None, circuits=None) -> pd.DataFrame:
     # per-circuit history, strictly before the current race
     circ_race = df.groupby(["location", "race_id"], as_index=False).agg(
         circuit_dnf_rate_raw=("dnf", "mean"),
-        circuit_pos_gain_raw=("pos_gain", lambda s: s.abs().mean()),
-        circuit_sc_rate_raw=("safety_car", "max"))
+        circuit_pos_gain_raw=("pos_gain", lambda s: s.abs().mean()))
     circ_race = circ_race.sort_values("race_id")
     for raw, out in [("circuit_dnf_rate_raw", "circuit_dnf_rate"),
-                     ("circuit_pos_gain_raw", "circuit_pos_gain"),
-                     ("circuit_sc_rate_raw", "circuit_sc_rate")]:
+                     ("circuit_pos_gain_raw", "circuit_pos_gain")]:
         circ_race[out] = _prior_rolling(circ_race, "location", raw)
-    df = df.merge(circ_race[["location", "race_id", "circuit_dnf_rate",
-                             "circuit_pos_gain", "circuit_sc_rate"]],
+    df = df.merge(circ_race[["location", "race_id", "circuit_dnf_rate", "circuit_pos_gain"]],
                   on=["location", "race_id"], how="left")
     return df

@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Leak-free F1 podium prediction with walk-forward validation"
 requires-python = ">=3.11"
 dependencies = [
-    "fastf1>=3.4",
     "pandas>=2.1",
     "numpy>=1.26",
     "scikit-learn>=1.4",

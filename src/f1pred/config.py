@@ -9,3 +9,5 @@ RESULTS_CSV = RAW / "results.csv"
 RACES_CSV = RAW / "races.csv"
 
 FORM_WINDOW = 5
+PREDICTIONS = DATA / "predictions"
+REPORTS = ROOT / "reports"
