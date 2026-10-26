@@ -53,7 +53,7 @@ h1{font:900 32px/38px var(--display);text-transform:uppercase;text-wrap:balance;
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;color:var(--muted);margin:0 0 16px}
 .tag{background:rgb(225,6,0);color:#FFFFFF;border-radius:999px;padding:2px 12px;
 font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px}
-.tag.back{background:none;border:1px solid var(--muted);color:var(--muted);border-radius:4px;padding:2px 8px}
+.tag.back{background:var(--text);color:var(--bg)}
 .claim{font:400 16px/24px var(--body);max-width:68ch;margin:0 0 32px}
 .summary{font:600 16px/24px var(--body);margin:0 0 16px}
 .label{font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:0 0 12px}
@@ -132,6 +132,8 @@ transition:transform .2s cubic-bezier(.4,0,.2,1)}
 .method li{margin-bottom:8px}
 .method .scroll{margin:16px 0;max-width:none}
 .method caption{caption-side:top;text-align:left;color:var(--muted);font:600 14px/20px var(--body);padding-bottom:8px}
+.insights{margin:16px 0 48px;padding:0 0 0 20px;max-width:68ch}
+.insights li{font:400 16px/24px var(--body);margin:0 0 8px}
 .note{color:var(--muted);font:400 14px/20px var(--body);max-width:68ch;margin:32px 0 0}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 """
@@ -322,6 +324,65 @@ def _is_hit(d):
     return _outcome(d) not in (None, "DNF") and d["actual_position"] <= 3
 
 
+TAG_LABELS = {"scored": "post-race"}
+
+
+def _debrief(drivers, names, evaluation):
+    """Post-race section: the real podium next to what the model expected, plus plain-words insights."""
+    def who(d):
+        first, last = _names(d["driver"], names)
+        return f"{first} {last}".strip()
+
+    rank = {d["driver"]: i + 1 for i, d in enumerate(drivers)}
+    podium = sorted((d for d in drivers if _is_hit(d)), key=lambda d: d["actual_position"])
+    if not podium:
+        return ""
+    rows = ""
+    for d in podium:
+        style, cls = _team_style(d["team"])
+        grid = d["grid"] if d["grid"] is not None else "-"
+        rows += (f'<tr class="{cls.strip()}"{style}><td class="num">{d["actual_position"]}</td>'
+                 f'<td><div class="cell"><span class="sv"></span>{escape(d["driver"])}</div></td>'
+                 f'<td class="team-col">{escape(str(d["team"]))}</td><td class="num">{grid}</td>'
+                 f'<td class="num">{rank[d["driver"]]}</td><td class="num">{d["p_podium"] * 100:.1f}%</td></tr>')
+
+    notes = []
+    winner = podium[0]
+    if winner["actual_position"] == 1:
+        notes.append(f'{who(winner)} won. The model ranked them {_ordinal(rank[winner["driver"]])}, '
+                     f'with a {winner["p_podium"] * 100:.1f}% podium chance.')
+    surprise = max(podium, key=lambda d: rank[d["driver"]])
+    if rank[surprise["driver"]] > 3:
+        notes.append(f'Biggest surprise: {who(surprise)} finished {_ordinal(surprise["actual_position"])} '
+                     f'after being ranked {_ordinal(rank[surprise["driver"]])} at {surprise["p_podium"] * 100:.1f}%.')
+    misses = [d for d in drivers[:3] if not _is_hit(d)]
+    if misses:
+        m = min(misses, key=lambda d: -(d["actual_position"] or 99) if _outcome(d) != "DNF" else -99)
+        res = _outcome(m)
+        end = "did not finish" if res == "DNF" else f"finished {res}" if res else "has no recorded result"
+        notes.append(f'Biggest miss: {who(m)} was ranked {_ordinal(rank[m["driver"]])} at '
+                     f'{m["p_podium"] * 100:.1f}% and {end}.')
+    pole = next((d for d in drivers if d["grid"] == 1), None)
+    if pole and _outcome(pole):
+        res = _outcome(pole)
+        notes.append(f'Pole sitter {who(pole)} ' + ("did not finish." if res == "DNF" else f"finished {res}."))
+    scored = [d for d in drivers if _outcome(d) is not None]
+    if scored:
+        brier = sum((d["p_podium"] - float(_is_hit(d))) ** 2 for d in scored) / len(scored)
+        avg = ((evaluation or {}).get("models", {}).get("xgboost", {}) or {}).get("brier")
+        line = f"Score for this race (Brier, lower is better): {brier:.3f}."
+        if avg:
+            line += f" The average over earlier races is {avg:.3f}, so this one went " + ("better." if brier < avg else "worse.")
+        notes.append(line)
+
+    items = "".join(f"<li>{n}</li>" for n in notes)
+    return f"""<h2 class="label">Cool-down room: how the prediction did</h2>
+<div class="scroll"><table><thead><tr><th scope="col" class="num">Finish</th><th scope="col">Driver</th><th scope="col" class="team-col">Team</th>
+<th scope="col" class="num">Grid</th><th scope="col" class="num">Model rank</th><th scope="col" class="num">Podium probability</th></tr></thead>
+<tbody>{rows}</tbody></table></div>
+<ul class="insights">{items}</ul>"""
+
+
 def render_body(p: dict, evaluation=None, names=None) -> str:
     """Everything in a race report below its title: meta, picks, full field table."""
     drivers = p["drivers"]
@@ -380,15 +441,16 @@ def render_body(p: dict, evaluation=None, names=None) -> str:
     made = escape(p["created_utc"][:16].replace("T", " ")) + " UTC"
     result_added = (f'<span>Result added {escape(p["outcome_utc"][:16].replace("T", " "))} UTC</span>'
                     if p.get("outcome_utc") else "")
-    tag = f'<span class="tag{" back" if backtest else ""}">{escape(p["mode"])}</span>'
+    tag = f'<span class="tag{" back" if backtest else ""}">{escape(TAG_LABELS.get(p["mode"], p["mode"]))}</span>'
     claim = " ".join(s for s in (
         "Raw model output, not calibrated.", _baseline_line(evaluation),
         "Grid is the qualifying order, so penalties are not included.") if s)
+    debrief = _debrief(drivers, names, evaluation) if backtest else ""
     return f"""<p class="meta">{tag}<span>Round {p['round']}, {p['year']}</span><span>Trained on {p['trained_on_races']} earlier races</span><span>Made {made}</span>{result_added}</p>
 <p class="claim">{escape(claim)}</p>
 {summary}<h2 class="label">Highest podium probability</h2>
 <section class="podium">{cards}</section>
-<h2 class="label">Full field</h2>
+{debrief}<h2 class="label">Full field</h2>
 <div class="scroll"><table><thead><tr><th scope="col" class="num">Rank</th><th scope="col">Driver</th><th scope="col" class="team-col">Team</th>
 <th scope="col" class="num">Grid</th><th scope="col">Podium probability</th>{extra_th}</tr></thead>
 <tbody>{rows}</tbody></table></div>
