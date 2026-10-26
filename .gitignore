@@ -5,3 +5,5 @@ data/cache/
 data/raw/
 .DS_Store
 .impeccable/
+dump.txt
+node_modules/
