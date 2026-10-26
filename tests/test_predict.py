@@ -43,7 +43,7 @@ def test_unknown_team_and_missing_grid_do_not_break_render():
 def test_known_teams_get_a_color_and_reasons_read_as_plain_words():
     html = render(_payload(drivers=[_driver("VER", "Red Bull", 0.8), _driver("GAS", "Alpine F1 Team", 0.1)]))
     assert "#3671C6" in html and "#00A1E8" in html
-    assert "Recent average finish of 3.4" in html and "Pick 1" in html
+    assert "Recent average finish of 3.4" in html and ">P1<" in html
 
 
 def test_backtest_summary_marks_hits_misses_dnf_and_near_misses():

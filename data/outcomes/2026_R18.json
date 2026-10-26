@@ -1,0 +1,95 @@
+{
+  "year": 2026,
+  "round": 18,
+  "created_utc": "2026-10-26T06:32:42+00:00",
+  "drivers": {
+    "ANT": {
+      "position": 1,
+      "status": "Finished"
+    },
+    "LEC": {
+      "position": 2,
+      "status": "Finished"
+    },
+    "VER": {
+      "position": 3,
+      "status": "Finished"
+    },
+    "HAM": {
+      "position": 4,
+      "status": "Finished"
+    },
+    "NOR": {
+      "position": 5,
+      "status": "Finished"
+    },
+    "HAD": {
+      "position": 6,
+      "status": "Finished"
+    },
+    "PIA": {
+      "position": 7,
+      "status": "Finished"
+    },
+    "RUS": {
+      "position": 8,
+      "status": "Finished"
+    },
+    "LAW": {
+      "position": 9,
+      "status": "Finished"
+    },
+    "GAS": {
+      "position": 10,
+      "status": "Finished"
+    },
+    "HUL": {
+      "position": 11,
+      "status": "Finished"
+    },
+    "LIN": {
+      "position": 12,
+      "status": "Lapped"
+    },
+    "BOR": {
+      "position": 13,
+      "status": "Lapped"
+    },
+    "OCO": {
+      "position": 14,
+      "status": "Lapped"
+    },
+    "STR": {
+      "position": 15,
+      "status": "Lapped"
+    },
+    "ALO": {
+      "position": 16,
+      "status": "Lapped"
+    },
+    "ALB": {
+      "position": 17,
+      "status": "Lapped"
+    },
+    "SAI": {
+      "position": 18,
+      "status": "Lapped"
+    },
+    "PER": {
+      "position": 19,
+      "status": "Lapped"
+    },
+    "BOT": {
+      "position": 20,
+      "status": "Retired"
+    },
+    "COL": {
+      "position": 21,
+      "status": "Retired"
+    },
+    "BEA": {
+      "position": 22,
+      "status": "Retired"
+    }
+  }
+}

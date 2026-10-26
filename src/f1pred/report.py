@@ -111,13 +111,20 @@ font:900 17px/20px var(--body);transition:background-position .8s cubic-bezier(.
 filter:drop-shadow(0 1px 0 var(--chrome-edge))}
 .made a:hover,.made a:focus-visible{background-position:-9px 0}}
 .races{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:12px}
-.races li{border:1px solid var(--rule);border-radius:8px;overflow:hidden}
-.races a{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:16px;
-color:var(--text);text-decoration:none;transition:background-color .15s cubic-bezier(.4,0,.2,1)}
-.races a:hover{background:var(--surface-2)}
+.races>li{border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.races summary{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:4px 16px;padding:16px;cursor:pointer;
+list-style:none;transition:background-color .15s cubic-bezier(.4,0,.2,1)}
+.races summary::-webkit-details-marker{display:none}
+.races summary:hover{background:var(--surface-2)}
+.races summary::after{content:"";width:8px;height:8px;border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(45deg);
+transition:transform .2s cubic-bezier(.4,0,.2,1)}
+.races details[open] summary::after{transform:rotate(-135deg)}
 .races .ev{font:700 20px/24px var(--display);text-transform:uppercase}
 .races .meta2{color:var(--muted);font:600 14px/20px var(--body);margin:0}
 .races .when{color:var(--muted);font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px;text-align:right}
+.races .rbody{padding:16px;border-top:1px solid var(--rule)}
+.races .open{display:inline-block;color:var(--text);font:600 14px/20px var(--body)}
+@media(prefers-reduced-motion:reduce){.races summary::after{transition:none}}
 .method{margin-top:64px;max-width:68ch}
 .method h3{font:700 20px/24px var(--body);margin:32px 0 8px}
 .method p,.method li{font:400 16px/24px var(--body);margin:0 0 12px}
@@ -315,7 +322,8 @@ def _is_hit(d):
     return _outcome(d) not in (None, "DNF") and d["actual_position"] <= 3
 
 
-def render(p: dict, evaluation=None, names=None) -> str:
+def render_body(p: dict, evaluation=None, names=None) -> str:
+    """Everything in a race report below its title: meta, picks, full field table."""
     drivers = p["drivers"]
     picks = drivers[:3]
     backtest = p["mode"] in ("backtest", "scored")
@@ -376,12 +384,7 @@ def render(p: dict, evaluation=None, names=None) -> str:
     claim = " ".join(s for s in (
         "Raw model output, not calibrated.", _baseline_line(evaluation),
         "Grid is the qualifying order, so penalties are not included.") if s)
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SlipStream {p['year']} {escape(p['event'])}</title>{FONT_LINK}{ANALYTICS}<style>{CSS}</style></head><body><main>
-{_top(True)}
-<h1>{escape(p['event'])}</h1>
-<p class="meta">{tag}<span>Round {p['round']}, {p['year']}</span><span>Trained on {p['trained_on_races']} earlier races</span><span>Made {made}</span>{result_added}</p>
+    return f"""<p class="meta">{tag}<span>Round {p['round']}, {p['year']}</span><span>Trained on {p['trained_on_races']} earlier races</span><span>Made {made}</span>{result_added}</p>
 <p class="claim">{escape(claim)}</p>
 {summary}<h2 class="label">Highest podium probability</h2>
 <section class="podium">{cards}</section>
@@ -389,7 +392,17 @@ def render(p: dict, evaluation=None, names=None) -> str:
 <div class="scroll"><table><thead><tr><th scope="col" class="num">Rank</th><th scope="col">Driver</th><th scope="col" class="team-col">Team</th>
 <th scope="col" class="num">Grid</th><th scope="col">Podium probability</th>{extra_th}</tr></thead>
 <tbody>{rows}</tbody></table></div>
-<p class="note">Probabilities are independent for each driver, so they do not add up to 100%. Reasons are the three features that moved a pick's score most, strongest first: + raised it, - lowered it.</p>
+<p class="note">Probabilities are independent for each driver, so they do not add up to 100%. Reasons are the three features that moved a pick's score most, strongest first: + raised it, - lowered it.</p>"""
+
+
+def render(p: dict, evaluation=None, names=None) -> str:
+    evaluation = p.get("evaluation") or evaluation
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SlipStream {p['year']} {escape(p['event'])}</title>{FONT_LINK}{ANALYTICS}<style>{CSS}</style></head><body><main>
+{_top(True)}
+<h1>{escape(p['event'])}</h1>
+{render_body(p, evaluation, names)}
 {_method_html(evaluation)}
 {CREDIT}
 </main></body></html>"""
@@ -418,8 +431,11 @@ def render_index(items, evaluation=None, names=None):
         hits = sum(_is_hit(d) for d in p["drivers"][:3])
         detail = f'Top pick {who}, {top["p_podium"] * 100:.1f}% podium probability'
         status = f"{hits} of 3 picks on the podium" if backtest else "Waiting for the race"
-        rows += (f'<li><a href="{p["year"]}_R{p["round"]:02d}.html"><span><span class="ev">{escape(p["event"])}</span>'
-                 f'<p class="meta2">{detail}</p></span><span class="when">Round {p["round"]}, {p["year"]}<br>{status}</span></a></li>')
+        slug = f'{p["year"]}-R{p["round"]:02d}'
+        rows += (f'<li><details id="{slug}"><summary><span><span class="ev">{escape(p["event"])}</span>'
+                 f'<p class="meta2">{detail}</p></span><span class="when">Round {p["round"]}, {p["year"]}<br>{status}</span></summary>'
+                 f'<div class="rbody">{render_body(p, evaluation, names)}'
+                 f'<a class="open" href="{p["year"]}_R{p["round"]:02d}.html">Open as its own page</a></div></details></li>')
     if not rows:
         rows = '<li><p class="meta2" style="padding:16px">No predictions yet.</p></li>'
     claim = " ".join(s for s in ("Raw model output, not calibrated.", _baseline_line(evaluation)) if s)
@@ -431,6 +447,7 @@ def render_index(items, evaluation=None, names=None):
 <p class="claim">Made after qualifying and saved before the race, then compared with the result. {escape(claim)}</p>
 <h2 class="label">Races</h2>
 <ul class="races">{rows}</ul>
+<script>(function(){{var d=document.getElementById(location.hash.slice(1));if(d&&d.tagName==="DETAILS")d.open=true}})()</script>
 {_method_html(evaluation)}
 {CREDIT}
 </main></body></html>"""
