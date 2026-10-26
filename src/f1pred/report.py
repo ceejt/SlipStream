@@ -51,25 +51,27 @@ font:600 14px/20px var(--body);transition:background-color .15s cubic-bezier(.4,
 h1{font:900 32px/38px var(--display);text-transform:uppercase;text-wrap:balance;margin:0 0 12px}
 @media(min-width:735px){h1{font-size:40px;line-height:44px}}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;color:var(--muted);margin:0 0 16px}
-.tag{border:1px solid var(--tag);color:var(--tag);border-radius:4px;padding:2px 8px;
+.tag{background:rgb(225,6,0);color:#FFFFFF;border-radius:999px;padding:2px 12px;
 font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px}
-.tag.back{border-color:var(--muted);color:var(--muted)}
+.tag.back{background:none;border:1px solid var(--muted);color:var(--muted);border-radius:4px;padding:2px 8px}
 .claim{font:400 16px/24px var(--body);max-width:68ch;margin:0 0 32px}
 .summary{font:600 16px/24px var(--body);margin:0 0 16px}
 .label{font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:0 0 12px}
 .podium{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:48px}
-@media(min-width:735px){.podium{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:735px){.podium{grid-template-columns:repeat(3,1fr);align-items:end}
+.card.p1{order:2}.card.p2{order:1}.card.p3{order:3}.card.p1{min-height:288px}}
 .card{background:var(--card-bg,var(--surface-2));color:var(--on,var(--text));border-radius:8px;padding:16px;
 display:grid;grid-template-columns:1fr auto;gap:12px 16px}
 @media(min-width:735px){.card{display:flex;flex-direction:column;min-height:256px}}
-.pick{font:500 12px/16px var(--display);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px}
+.pick{font:900 32px/38px var(--display);text-transform:uppercase;margin:0 0 8px;color:var(--accent,inherit)}
+@media(min-width:735px){.pick{font-size:40px;line-height:44px}}
 .first{font:400 20px/24px var(--display);margin:0}
 .last{font:700 28px/32px var(--display);margin:0;overflow-wrap:anywhere}
 @media(min-width:735px){.last{font-size:32px;line-height:36px}}
 .team{font:600 14px/16px var(--body);margin:8px 0 0}
 .score{align-self:end;text-align:right}
 @media(min-width:735px){.score{align-self:stretch;margin-top:auto;padding-top:16px;text-align:left}}
-.pct{font:700 36px/40px var(--body);margin:0;font-variant-numeric:tabular-nums}
+.pct{font:700 36px/40px var(--body);margin:0;color:var(--accent,inherit);font-variant-numeric:tabular-nums}
 .sub{font:600 14px/16px var(--body);margin:0}
 .outcome{grid-column:1/-1;margin:0;display:flex;align-items:center;gap:8px;font:600 16px/20px var(--body)}
 .why{grid-column:1/-1;margin:0;padding:0;list-style:none;font:600 14px/20px var(--body)}
@@ -108,8 +110,9 @@ animation:grow .3s cubic-bezier(.4,0,.2,1) both;animation-delay:calc(var(--i)*30
 font:900 17px/20px var(--body);transition:background-position .8s cubic-bezier(.4,0,.2,1);
 filter:drop-shadow(0 1px 0 var(--chrome-edge))}
 .made a:hover,.made a:focus-visible{background-position:-9px 0}}
-.races{list-style:none;margin:0 0 16px;padding:0}
-.races a{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:16px 8px;border-bottom:1px solid var(--rule);
+.races{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:12px}
+.races li{border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.races a{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:16px;
 color:var(--text);text-decoration:none;transition:background-color .15s cubic-bezier(.4,0,.2,1)}
 .races a:hover{background:var(--surface-2)}
 .races .ev{font:700 20px/24px var(--display);text-transform:uppercase}
@@ -165,9 +168,9 @@ def _team_style(team):
 
 
 def _card_style(team):
-    """Card colors: F1's dark team shade with white text, or the neutral surface."""
+    """Card colors: F1's dark team shade with white text and the team color as accent for large text, or the neutral surface."""
     info = _team_info(team)
-    return f' style="--card-bg:{info[1]};--on:#FFFFFF"' if info else ""
+    return f' style="--card-bg:{info[1]};--on:#FFFFFF;--accent:{info[0]}"' if info else ""
 
 
 def _names(code, names):
@@ -329,7 +332,7 @@ def render(p: dict, evaluation=None, names=None) -> str:
             mark = '<span class="mark">Hit</span>' if _is_hit(d) else '<span class="mark miss">Miss</span>'
             out = f'<p class="outcome">{mark} {text}</p>'
         cards += (
-            f'<article class="card"{_card_style(d["team"])}><div><p class="pick">Pick {i + 1}</p>'
+            f'<article class="card p{i + 1}"{_card_style(d["team"])}><div><p class="pick">P{i + 1}</p>'
             + (f'<p class="first">{first}</p>' if first else "")
             + f'<p class="last">{last}</p><p class="team">{escape(str(d["team"]))} · {grid}</p></div>'
             f'<div class="score"><p class="pct">{d["p_podium"] * 100:.1f}%</p><p class="sub">podium probability</p></div>'
@@ -418,7 +421,7 @@ def render_index(items, evaluation=None, names=None):
         rows += (f'<li><a href="{p["year"]}_R{p["round"]:02d}.html"><span><span class="ev">{escape(p["event"])}</span>'
                  f'<p class="meta2">{detail}</p></span><span class="when">Round {p["round"]}, {p["year"]}<br>{status}</span></a></li>')
     if not rows:
-        rows = '<li><p class="meta2" style="padding:16px 8px">No predictions yet.</p></li>'
+        rows = '<li><p class="meta2" style="padding:16px">No predictions yet.</p></li>'
     claim = " ".join(s for s in ("Raw model output, not calibrated.", _baseline_line(evaluation)) if s)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
