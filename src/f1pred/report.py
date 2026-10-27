@@ -8,6 +8,11 @@ import pandas as pd
 
 from .config import EVALUATION, OUTCOMES, PREDICTIONS, REPORTS, RESULTS_CSV
 
+FAVICON = (
+    '<link rel="icon" href="favicon-light.svg" type="image/svg+xml" media="(prefers-color-scheme: light)">'
+    '<link rel="icon" href="favicon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">'
+)
+
 FONT_LINK = (
     '<link rel="preconnect" href="https://fonts.googleapis.com">'
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
@@ -145,8 +150,8 @@ FINISHED = re.compile(r"Finished|Lap")
 ANALYTICS = ('<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script>'
              '<script defer src="/_vercel/insights/script.js"></script>')
 
-BRAND = ('<p class="brand"><a href="https://github.com/ceejt/SlipStream" target="_blank" rel="noopener noreferrer" '
-         'aria-label="SlipStream, source code on GitHub (opens in a new tab)">SlipStream</a></p>')
+BRAND = ('<p class="brand"><a href="https://github.com/ceejt/Slipstream" target="_blank" rel="noopener noreferrer" '
+         'aria-label="Slipstream, source code on GitHub (opens in a new tab)">Slipstream</a></p>')
 
 def _top(back=False):
     """Top bar: wordmark on the left, and on race pages a button back to the index."""
@@ -461,7 +466,7 @@ def render(p: dict, evaluation=None, names=None) -> str:
     evaluation = p.get("evaluation") or evaluation
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SlipStream {p['year']} {escape(p['event'])}</title>{FONT_LINK}{ANALYTICS}<style>{CSS}</style></head><body><main>
+<title>SlipStream {p['year']} {escape(p['event'])}</title>{FAVICON}{FONT_LINK}{ANALYTICS}<style>{CSS}</style></head><body><main>
 {_top(True)}
 <h1>{escape(p['event'])}</h1>
 {render_body(p, evaluation, names)}
@@ -503,7 +508,7 @@ def render_index(items, evaluation=None, names=None):
     claim = " ".join(s for s in ("Raw model output, not calibrated.", _baseline_line(evaluation)) if s)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SlipStream</title>{FONT_LINK}{ANALYTICS}<style>{CSS}</style></head><body><main>
+<title>SlipStream</title>{FAVICON}{FONT_LINK}{ANALYTICS}<style>{CSS}</style></head><body><main>
 {_top()}
 <h1>Formula 1 podium predictions</h1>
 <p class="claim">Made after qualifying and saved before the race, then compared with the result. {escape(claim)}</p>
